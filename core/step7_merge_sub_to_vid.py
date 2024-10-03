@@ -19,60 +19,36 @@ TRANS_OUTLINE_WIDTH = 1
 TRANS_BACK_COLOR = '&H33000000'
 
 def merge_subtitles_to_video():
-    from config import RESOLUTION
-    TARGET_WIDTH, TARGET_HEIGHT = RESOLUTION.split('x')
-    video_file = find_video_files()
-    output_video = "output/output_video_with_subs.mp4"
-    os.makedirs(os.path.dirname(output_video), exist_ok=True)
-
-    # Check resolution
-    if RESOLUTION == '0x0':
-        rprint("[bold yellow]Warning: A 0-second black video will be generated as a placeholder as Resolution is set to 0x0.[/bold yellow]")
-
-        # Create a black frame
-        frame = np.zeros((1080, 1920, 3), dtype=np.uint8)
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter(output_video, fourcc, 1, (1920, 1080))
-        out.write(frame)
-        out.release()
-
-        rprint("[bold green]Placeholder video has been generated.[/bold green]")
+    video_files = find_video_files()
+    if not video_files:
+        print("No video files found in the output directory.")
         return
 
-    en_srt = "output/src_subtitles.srt"
-    trans_srt = "output/trans_subtitles.srt"
+    video_file = video_files[0]
+    subtitle_file = os.path.join('output', 'src_subs.srt')
 
-    if not os.path.exists(en_srt) or not os.path.exists(trans_srt):
-        print("Subtitle files not found in the 'output' directory.")
-        exit(1)
+    if not os.path.exists(subtitle_file):
+        print(f"Subtitle file {subtitle_file} not found.")
+        return
 
-    # 确定是否是macOS
-    macOS = os.name == 'posix' and os.uname().sysname == 'Darwin'
+    output_file = os.path.join('output', 'output_video_with_subs.mp4')
 
     ffmpeg_cmd = [
-        'ffmpeg', '-i', video_file,
-        '-vf', (
-            f"scale={TARGET_WIDTH}:{TARGET_HEIGHT}:force_original_aspect_ratio=decrease,"
-            f"pad={TARGET_WIDTH}:{TARGET_HEIGHT}:(ow-iw)/2:(oh-ih)/2,"
-            f"subtitles={en_srt}:force_style='FontSize={SRC_FONT_SIZE},FontName={FONT_NAME}," 
-            f"PrimaryColour={SRC_FONT_COLOR},OutlineColour={SRC_OUTLINE_COLOR},OutlineWidth={SRC_OUTLINE_WIDTH},"
-            f"ShadowColour={SRC_SHADOW_COLOR},BorderStyle=1',"
-            f"subtitles={trans_srt}:force_style='FontSize={TRANS_FONT_SIZE},FontName={TRANS_FONT_NAME},"
-            f"PrimaryColour={TRANS_FONT_COLOR},OutlineColour={TRANS_OUTLINE_COLOR},OutlineWidth={TRANS_OUTLINE_WIDTH},"
-            f"BackColour={TRANS_BACK_COLOR},Alignment=2,MarginV=25,BorderStyle=4'"
-        ).encode('utf-8'),  # 使用 UTF-8 编码
-        '-y',
-        output_video
+        'ffmpeg',
+        '-i', video_file,
+        '-vf', f"subtitles={subtitle_file}:force_style='FontName={FONT_NAME},FontSize={SRC_FONT_SIZE},PrimaryColour={SRC_FONT_COLOR},OutlineColour={SRC_OUTLINE_COLOR},BorderStyle=3,Outline={SRC_OUTLINE_WIDTH},Shadow=0,MarginV=35'",
+        '-c:a', 'copy',
+        output_file
     ]
 
-    # 根据是否是macOS添加不同的参数, macOS的ffmpeg不包含preset
+    # Add different parameters based on whether it's macOS or not
     if not macOS:
         ffmpeg_cmd.insert(-2, '-preset')
         ffmpeg_cmd.insert(-2, 'veryfast')
 
     print("🎬 Start merging subtitles to video...")
     start_time = time.time()
-    process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding='utf-8')  # 指定 UTF-8 编码
+    process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, encoding='utf-8')
 
     try:
         for line in process.stdout:

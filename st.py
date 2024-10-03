@@ -58,12 +58,6 @@ def process_text():
     with st.spinner(gls("splitting_long_sentences")):  
         step3_1_spacy_split.split_by_spacy()
         step3_2_splitbymeaning.split_sentences_by_meaning()
-    with st.spinner(gls("summarizing_and_translating")):
-        step4_1_summarize.get_summary()
-        from config import PAUSE_BEFORE_TRANSLATE
-        if PAUSE_BEFORE_TRANSLATE:
-            input("⚠️ PAUSE_BEFORE_TRANSLATE. Go to `output/log/terminology.json` to edit terminology. Then press ENTER to continue...")
-        step4_2_translate_all.translate_all()
     with st.spinner(gls("processing_aligning_subtitles")): 
         step5_splitforsub.split_for_sub_main()
         step6_generate_final_timeline.align_timestamp_main()

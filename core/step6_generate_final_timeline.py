@@ -125,37 +125,24 @@ def align_timestamp(df_text, df_translate, subtitle_output_configs: list, output
 
 def align_timestamp_main():
     df_text = pd.read_excel('output/log/cleaned_chunks.xlsx')
-    df_text['text'] = df_text['text'].str.strip('"').str.strip()
-    df_translate = pd.read_excel('output/log/translation_results_for_subtitles.xlsx')
-    df_translate['Translation'] = df_translate['Translation'].apply(lambda x: str(x).strip('。').strip('，') if pd.notna(x) else '')
-    # check if there's empty translation
-    empty_rows = df_translate[df_translate['Translation'].str.len() == 0]
-    if not empty_rows.empty:
-        console.print(Panel("[bold red]🚫 Detected empty translation rows! Please manually check the following rows in `output\log\translation_results_for_subtitles.xlsx` and fill them with appropriate content, then run again:[/bold red]"))
-        console.print(empty_rows.index.tolist())
-        raise ValueError("Empty translation rows detected")
-    subtitle_output_configs = [ 
-        ('src_subtitles.srt', ['Source']),
-        ('trans_subtitles.srt', ['Translation']),
-        ('bilingual_src_trans_subtitles.srt', ['Source', 'Translation']),
-        ('bilingual_trans_src_subtitles.srt', ['Translation', 'Source'])
+    
+    subtitle_output_configs = [
+        ('src_subs.srt', ['Source'])
     ]
-    align_timestamp(df_text, df_translate, subtitle_output_configs, 'output')
+    align_timestamp(df_text, df_text, subtitle_output_configs, 'output')
     console.print(Panel("[bold green]🎉📝 Subtitles generation completed! Please check in the `output` folder 👀[/bold green]"))
 
     # for audio
-    df_translate_for_audio = pd.read_excel('output/log/translation_results.xlsx')
-    df_translate_for_audio['Translation'] = df_translate_for_audio['Translation'].apply(lambda x: str(x).strip('。').strip('，'))
-    if (df_translate_for_audio['Translation'].str.len() == 0).sum() > 0:
-        console.print(Panel("[bold red]🚫 Detected empty translation rows! Please manually check the empty rows in `output\log\translation_results.xlsx` and fill them with appropriate content, then run again.[/bold red]"))
-        raise ValueError("Empty translation rows detected")
+    df_for_audio = pd.read_excel('output/log/cleaned_chunks.xlsx')
+    df_for_audio['Source'] = df_for_audio['Source'].apply(lambda x: str(x).strip('。').strip('，'))
+    if (df_for_audio['Source'].str.len() == 0).sum() > 0:
+        console.print(Panel("[bold red]🚫 Detected empty source rows! Please manually check the empty rows in `output\log\cleaned_chunks.xlsx` and fill them with appropriate content, then run again.[/bold red]"))
+        raise ValueError("Empty source rows detected")
     subtitle_output_configs = [
-        ('src_subs_for_audio.srt', ['Source']),
-        ('trans_subs_for_audio.srt', ['Translation'])
+        ('src_subs_for_audio.srt', ['Source'])
     ]
-    align_timestamp(df_text, df_translate_for_audio, subtitle_output_configs, 'output/audio')
+    align_timestamp(df_text, df_for_audio, subtitle_output_configs, 'output/audio')
     console.print(Panel("[bold green]🎉📝 Audio subtitles generation completed! Please check in the `output/audio` folder 👀[/bold green]"))
-    
 
 if __name__ == '__main__':
     align_timestamp_main()
