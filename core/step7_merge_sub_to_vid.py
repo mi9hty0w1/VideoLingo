@@ -25,7 +25,7 @@ def merge_subtitles_to_video():
         return
 
     video_file = video_files[0]
-    subtitle_file = os.path.join('output', 'src_subs.srt')
+    subtitle_file = os.path.join('output', 'src_subtitles.srt')
 
     if not os.path.exists(subtitle_file):
         print(f"Subtitle file {subtitle_file} not found.")

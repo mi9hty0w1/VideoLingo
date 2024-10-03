@@ -125,9 +125,10 @@ def align_timestamp(df_text, df_translate, subtitle_output_configs: list, output
 
 def align_timestamp_main():
     df_text = pd.read_excel('output/log/cleaned_chunks.xlsx')
+    df_text['text'] = df_text['text'].str.strip('"').str.strip()
     
     subtitle_output_configs = [
-        ('src_subs.srt', ['Source'])
+        ('src_subtitles.srt', ['Source'])
     ]
     align_timestamp(df_text, df_text, subtitle_output_configs, 'output')
     console.print(Panel("[bold green]🎉📝 Subtitles generation completed! Please check in the `output` folder 👀[/bold green]"))
